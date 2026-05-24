@@ -21,3 +21,7 @@ app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/api/debug-cors")
+def debug_cors():
+    return {"allowed_origins": settings.origins_list}
