@@ -24,7 +24,7 @@ def _inject_step_count(routes: list) -> list:
 
 @router.get("/")
 def list_public_routes(
-    limit: int = Query(20, le=100),
+    limit: int = Query(20, le=500),
     offset: int = 0,
     user: dict | None = Depends(get_current_user),
 ):
