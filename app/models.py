@@ -4,8 +4,8 @@ from datetime import datetime
 
 class StepCreate(BaseModel):
     step_index:   int
-    bearing_deg:  float = Field(ge=0, le=360)  # le not lt — 360 is valid
-    distance_m:   float = Field(gt=0)           # removed le=50000 — historical routes exceed it
+    bearing_deg:  float = Field(ge=0, le=360)
+    distance_m:   float = Field(gt=0)
     label:        Optional[str]   = None
     description:  Optional[str]   = None
     image_url:    Optional[str]   = None
@@ -20,14 +20,18 @@ class StepOut(StepCreate):
 
 class RouteCreate(BaseModel):
     title:              str = "Untitled Route"
-    description:        Optional[str] = None
-    cover_image_url:    Optional[str] = None
+    description:        Optional[str]   = None
+    cover_image_url:    Optional[str]   = None
     origin_lat:         float
     origin_lng:         float
-    origin_label:       Optional[str] = None
-    origin_description: Optional[str] = None
+    origin_label:       Optional[str]   = None
+    origin_description: Optional[str]   = None
     origin_duration:    int = 0
     is_public:          bool = False
+    total_walked_m:     Optional[float] = None
+    displacement_m:     Optional[float] = None
+    drift_pct:          Optional[float] = None
+    bearing_deg:        Optional[float] = None
     steps:              list[StepCreate] = []
 
 class RouteUpdate(BaseModel):

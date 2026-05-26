@@ -39,23 +39,27 @@ def list_my_routes(user: dict = Depends(require_auth)):
 @router.post("/")
 def create_route(payload: RouteCreate, user: dict = Depends(require_auth)):
     route_data = {
-        "user_id":             user["sub"],
-        "title":               payload.title,
-        "description":         payload.description,
-        "cover_image_url":     payload.cover_image_url,
-        "origin_lat":          payload.origin_lat,
-        "origin_lng":          payload.origin_lng,
-        "origin_label":        payload.origin_label,
-        "origin_description":  payload.origin_description,
-        "origin_duration":     payload.origin_duration,
-        "is_public":           payload.is_public,
+        "user_id":            user["sub"],
+        "title":              payload.title,
+        "description":        payload.description,
+        "cover_image_url":    payload.cover_image_url,
+        "origin_lat":         payload.origin_lat,
+        "origin_lng":         payload.origin_lng,
+        "origin_label":       payload.origin_label,
+        "origin_description": payload.origin_description,
+        "origin_duration":    payload.origin_duration,
+        "is_public":          payload.is_public,
+        "total_walked_m":     payload.total_walked_m,
+        "displacement_m":     payload.displacement_m,
+        "drift_pct":          payload.drift_pct,
+        "bearing_deg":        payload.bearing_deg,
     }
     route_data = {k: v for k, v in route_data.items() if v is not None}
 
     route_res = supabase.table("routes").insert(route_data).execute()
     if not route_res.data:
         raise HTTPException(500, "Failed to create route")
-    route = route_res.data[0]  # type: ignore
+    route = route_res.data[0]
 
     if payload.steps:
         steps_data = []
@@ -85,7 +89,7 @@ def get_route(route_id: str, user: dict | None = Depends(get_current_user)):
     )
     if not result.data:
         raise HTTPException(404, "Route not found")
-    route = result.data  # type: ignore
+    route = result.data
     if not route["is_public"] and (not user or user["sub"] != route["user_id"]):
         raise HTTPException(403, "Private route")
     supabase.table("routes").update(
@@ -106,7 +110,7 @@ def update_route(
         .single()
         .execute()
     )
-    if not existing.data or existing.data["user_id"] != user["sub"]:  # type: ignore
+    if not existing.data or existing.data["user_id"] != user["sub"]:
         raise HTTPException(403, "Not your route")
     update_data = {k: v for k, v in payload.model_dump(exclude_unset=True).items()}
     if not update_data:
@@ -114,7 +118,7 @@ def update_route(
     result = (
         supabase.table("routes").update(update_data).eq("id", route_id).execute()
     )
-    return _jsonable(result.data[0])  # type: ignore
+    return _jsonable(result.data[0])
 
 @router.delete("/{route_id}", status_code=204)
 def delete_route(route_id: str, user: dict = Depends(require_auth)):
@@ -125,7 +129,7 @@ def delete_route(route_id: str, user: dict = Depends(require_auth)):
         .single()
         .execute()
     )
-    if not existing.data or existing.data["user_id"] != user["sub"]:  # type: ignore
+    if not existing.data or existing.data["user_id"] != user["sub"]:
         raise HTTPException(403, "Not your route")
     supabase.table("routes").delete().eq("id", route_id).execute()
 
@@ -158,7 +162,7 @@ def fork_route(route_id: str, user: dict = Depends(require_auth)):
     new_route["forked_from"] = route_id
     new_route["view_count"]  = 0
     new_route["fork_count"]  = 0
-    created = supabase.table("routes").insert(new_route).execute().data[0]  # type: ignore
+    created = supabase.table("routes").insert(new_route).execute().data[0]
 
     if orig_steps.data:
         step_fields = [
