@@ -9,6 +9,19 @@ router = APIRouter()
 def _jsonable(data):
     return json.loads(json.dumps(data, default=str))
 
+def _inject_step_count(routes: list) -> list:
+    """
+    Supabase returns steps(count) as:  steps: [{"count": N}]
+    Flatten that to a plain  step_count: N  field and remove the nested list.
+    """
+    for r in routes:
+        steps_meta = r.pop("steps", None)
+        if isinstance(steps_meta, list) and steps_meta:
+            r["step_count"] = steps_meta[0].get("count", 0)
+        else:
+            r["step_count"] = 0
+    return routes
+
 @router.get("/")
 def list_public_routes(
     limit: int = Query(20, le=100),
@@ -17,24 +30,24 @@ def list_public_routes(
 ):
     result = (
         supabase.table("routes")
-        .select("*")
+        .select("*, steps(count)")
         .eq("is_public", True)
         .order("created_at", desc=True)
         .range(offset, offset + limit - 1)
         .execute()
     )
-    return _jsonable(result.data)
+    return _jsonable(_inject_step_count(result.data))
 
 @router.get("/mine")
 def list_my_routes(user: dict = Depends(require_auth)):
     result = (
         supabase.table("routes")
-        .select("*")
+        .select("*, steps(count)")
         .eq("user_id", user["sub"])
         .order("updated_at", desc=True)
         .execute()
     )
-    return _jsonable(result.data)
+    return _jsonable(_inject_step_count(result.data))
 
 @router.post("/")
 def create_route(payload: RouteCreate, user: dict = Depends(require_auth)):
